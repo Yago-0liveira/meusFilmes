@@ -1,17 +1,12 @@
+const db = require("../db");
 const ControleCategoria = {
-  findAll(req, res) {
-    res.json([
-      {
-        id: 1,
-        nome: "filmes A",
-        descricao: "categoria dos filmes que comecam com A",
-      },
-      {
-        id: 2,
-        nome: "filmes B",
-        descricao: "categoria dos filmes que comecam com B",
-      },
-    ]);
+  async findAll(req, res) {
+    try {
+      const categoria = await db.query("SELECT * from categoria");
+      res.json(categoria.rows);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
   find(req, res) {
     const { id } = req.params;
