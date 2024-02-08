@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const ControleCategoria = require("../controles/ControleCategoria.js");
 
-
-router.get('/', function(req,res){
-    res.send("entrei em categoria");
- });
-
- module.exports = router;
+router.get("/", ControleCategoria.findAll);
+router.get("/:id", ControleCategoria.find);
+router.post("/", ControleCategoria.create);
+router.delete("/:id", ControleCategoria.delete);
+module.exports = router;
