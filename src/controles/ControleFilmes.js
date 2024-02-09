@@ -48,7 +48,13 @@ const ControleFilmes = {
     const { titulo, descricao, id_categoria, assistido_em } = req.body;
 
     // É necessário realizar uma validação pelo id de categoria
-
+    const validaCategoria = await db.query(
+      `SELECT * FROM categoria WHERE id = $1`,
+      [id_categoria]
+    );
+    if (validaCategoria.rows.length === 0) {
+      return res.status(400).json({ error: "Categoria nao encontrada" });
+    }
     try {
       const novoFilme = await db.query(
         `INSERT INTO filmes (titulo, descricao, id_categoria, assistido_em)
@@ -65,6 +71,12 @@ const ControleFilmes = {
     const { id } = req.params;
 
     try {
+      const validaId = await db.query(`SELECT * FROM filmes WHERE id = $1`, [
+        id,
+      ]);
+      if (validaId.rows.length === 0) {
+        return res.status(404).json({ error: "Filme nao encontrado" });
+      }
       const resultado = await db.query(
         "DELETE FROM filmes WHERE id = $1 RETURNING *",
         [id]
@@ -79,6 +91,35 @@ const ControleFilmes = {
       res.status(500).json({ error: error.message });
     }
   },
-  async update(req, res) {},
+  async update(req, res) {
+    const { id } = req.params;
+    const { titulo, descricao, id_categoria, assistido_em } = req.body;
+
+    try {
+      const validaCategoria = await db.query(
+        `SELECT * FROM categoria WHERE id = $1`,
+        [id_categoria]
+      );
+      if (validaCategoria.rows.length === 0) {
+        return res.status(404).json({ error: "Categoria nao encontrada" });
+      }
+
+      const updateFilmes = await db.query(
+        `UPDATE filmes 
+            SET titulo = $1, descricao = $2, id_categoria = $3, assistido_em = $4 
+            WHERE id = $5
+            RETURNING *;`,
+        [titulo, descricao, id_categoria, assistido_em, id]
+      );
+
+      if (updateFilmes.rowCount > 0) {
+        res.status(200).json(updateFilmes.rows[0]);
+      } else {
+        res.status(304).json({ error: "atualização nao encontrada" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
 module.exports = ControleFilmes;

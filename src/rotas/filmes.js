@@ -6,5 +6,5 @@ router.get("/", ControleFilmes.findAll);
 router.get("/:id", ControleFilmes.find);
 router.post("/", ControleFilmes.create);
 router.delete("/:id", ControleFilmes.delete);
-
+router.put("/:id", ControleFilmes.update);
 module.exports = router;
