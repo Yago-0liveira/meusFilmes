@@ -1,47 +1,84 @@
+const db = require("../db");
+
 const ControleFilmes = {
-  findAll(req, res) {
-    res.json([
-      {
-        id: 1,
-        titulo: "batman",
-        descricao: "cara do morcego que bate em bandido",
-        id_Categoria: 1,
-        assistido_em: "22/01/2024",
-      },
-      {
-        id: 2,
-        titulo: "Harry Potter",
-        descricao: "vai sentando na vassoura",
-        id_Categoria: 2,
-        assistido_em: "01/01/2024",
-      },
-    ]);
+  async findAll(req, res) {
+    try {
+      const filmes = await db.query(`
+      SELECT 
+        f.*,
+        c.nome AS categoria_nome,
+        c.descricao AS categoria_descricao
+      FROM filmes f 
+      INNER JOIN categoria c ON c.id = f.id_categoria
+    `);
+
+      res.json(filmes.rows);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
-  find(req, res) {
+
+  async find(req, res) {
     const { id } = req.params;
-    res.json([
-      {
-        id: id,
-        titulo: "batman",
-        descricao: "cara do morcego que bate em bandido",
-        id_Categoria: 1,
-        assistido_em: "22/01/2024",
-      },
-    ]);
+
+    try {
+      const filmes = await db.query(
+        `
+        SELECT 
+          f.*,
+          c.nome AS categoria_nome,
+          c.descricao AS categoria_descricao
+        FROM filmes f 
+        INNER JOIN categoria c ON c.id = f.id_categoria
+        WHERE f.id = $1
+      `,
+        [id]
+      );
+
+      if (filmes.rows.length > 0) {
+        res.json(filmes.rows[0]);
+      } else {
+        res.status(404).json({ error: "Filme não encontrado" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
-  create(req, res) {
-    const { titulo, descricao, id_Categoria, assistido_em } = req.body;
-    res.status(201).json({
-      id: Number.MAX_SAFE_INTEGER,
-      titulo,
-      descricao,
-      id_Categoria,
-      assistido_em,
-    });
+  async create(req, res) {
+    const { titulo, descricao, id_categoria, assistido_em } = req.body;
+
+    // É necessário realizar uma validação pelo id de categoria
+
+    try {
+      const novoFilme = await db.query(
+        `INSERT INTO filmes (titulo, descricao, id_categoria, assistido_em)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [titulo, descricao, id_categoria, assistido_em]
+      );
+
+      res.status(201).json(novoFilme.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
-  delete(req, res) {
+  async delete(req, res) {
     const { id } = req.params;
-    res.status(204).json();
+
+    try {
+      const resultado = await db.query(
+        "DELETE FROM filmes WHERE id = $1 RETURNING *",
+        [id]
+      );
+
+      if (resultado.rowCount > 0) {
+        res.status(204).json({});
+      } else {
+        res.status(304).json({});
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
+  async update(req, res) {},
 };
 module.exports = ControleFilmes;
